@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body {
+  margin: 15px;
+  background-color: #F1F3F3    
+}
+.bar {
+	fill: #6F257F;
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #D4D8DA;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+.x path {
+	display: none;
+}
+.toolTip {
+	position: absolute;
+  display: none;
+  min-width: 80px;
+  height: auto;
+  background: none repeat scroll 0 0 #ffffff;
+  border: 1px solid #6F257F;
+  padding: 14px;
+  text-align: center;
+}
+</style>
+<svg width="960" height="500"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+var svg = d3.select("svg"),
+    margin = {top: 20, right: 20, bottom: 30, left: 80},
+    width = +svg.attr("width") - margin.left - margin.right,
+    height = +svg.attr("height") - margin.top - margin.bottom;
+  
+var tooltip = d3.select("body").append("div").attr("class", "toolTip");
+  
+var x = d3.scaleLinear().range([0, width]);
+var y = d3.scaleBand().range([height, 0]);
+
+var g = svg.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var xAxis,bars,labels;
+// var yAxis;
+d3.json("data.json", function(error, data) {
+  	if (error) throw error;
+    
+    xAxis = g.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")");
+
+    // yAxis = g.append("g")
+    //     .attr("class", "y axis");    
+  	
+    bars = g.append("g").attr("id","bars");
+    labels = g.append("g").attr("id","labels");
+    //绘制bar图
+    draw(data[0].data)
+});
+
+
+
+var draw=function(data){
+
+    data.sort(function(a, b) { return a.value - b.value; });
+  
+    x.domain([0, d3.max(data, function(d) { return d.value; })]);
+    y.domain(data.map(function(d) { return d.area; })).padding(0.1);
+
+    xAxis
+        .transition()
+        .duration(5000)
+        .call(d3.axisBottom(x).ticks(5).tickFormat(function(d) { return parseInt(d / 1000); }).tickSizeInner([-height]));
+    
+    //坐标轴上绘制名称虽然方便但是却不利于进行动画绘制
+
+    // yAxis
+    //     .transition()
+    //     .call(d3.axisLeft(y));
+    var labelsData = labels.selectAll(".label")
+        .data(data);
+
+    var barData = bars.selectAll(".bar")
+        .data(data);
+
+    barData.enter().append("rect")
+        .attr("class", "bar")
+        .attr('y',height)
+        .transition()
+        .duration(5000)
+        .attr("x", 0)
+        .attr("height", y.bandwidth())
+        .attr("y", function(d) { return y(d.area); })
+        .attr("width", function(d) { return x(d.value); });
+    console.log(y.paddingOuter());
+    console.log(y.bandwidth());
+    labelsData.enter().append("text")
+        .attr("class","label")
+        .attr("y",height)
+        .attr('dx','-5')
+        .attr("dy",y.bandwidth()/2)
+        .attr("text-anchor",'end')
+        .style("alignment-baseline",'central')
+        .text(d=>d.area)
+
+
+      .transition()
+        .duration(5000)
+        .attr("y", function(d) { return y(d.area); });
+
+
+
+
+}
+
+
+
+
+
+
+</script>

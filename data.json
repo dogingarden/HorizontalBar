@@ -1,0 +1,34 @@
+[
+	{
+		"year":1902,
+	    "data":[{"area": "central ", "value": 18000},
+		    {"area": "Riverside ", "value": 17000},
+		    {"area": "Picton ", "value": 80000},
+		    {"area": "Everton ", "value": 55000},
+		    {"area": "Kensington ", "value": 100000},
+		    {"area": "Kirkdale", "value": 50000},
+		    {"area": "central1 ", "value": 18000},
+		    {"area": "Riverside1 ", "value": 17000},
+		    {"area": "Picton1 ", "value": 80000},
+		    {"area": "Everton 1", "value": 55000},
+		    {"area": "Kensington1 ", "value": 100000},
+		    {"area": "Kirkdale2", "value": 50000}
+		]
+	},
+	{
+		"year":1903,
+	    "data":[{"area": "central ", "value": 17000},
+		    {"area": "Riverside ", "value": 17000},
+		    {"area": "Picton ", "value": 87000},
+		    {"area": "Everton ", "value": 55000},
+		    {"area": "Kensington ", "value": 170000},
+		    {"area": "Kirkdale", "value": 58000},
+		    {"area": "central1 ", "value": 18700},
+		    {"area": "Riverside1 ", "value": 17600},
+		    {"area": "Picton1 ", "value": 85000},
+		    {"area": "Everton 1", "value": 55600},
+		    {"area": "Kensington1 ", "value": 105000},
+		    {"area": "Kirkdale2", "value": 53000}
+		]
+	}
+]
