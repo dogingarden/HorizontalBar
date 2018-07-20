@@ -33,21 +33,8 @@ body {
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
-/* global requestAnimationFrame, $, d3 */
-window.requestAnimationFrame = (function() {
-  return window.requestAnimationFrame ||
-         window.webkitRequestAnimationFrame ||
-         window.mozRequestAnimationFrame ||
-         window.oRequestAnimationFrame ||
-         window.msRequestAnimationFrame ||
-         function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
-           return window.setTimeout(callback, 1000/60);
-         };
-})();
-
-
 var svg = d3.select("svg"),
-    margin = {top: 20, right: 20, bottom: 30, left: 80},
+    margin = {top: 20, right: 100, bottom: 30, left: 120},
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom;
   
@@ -57,7 +44,8 @@ var y = d3.scaleBand().range([height, 0]);
 
 var g = svg.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-var xAxis,bars,labels,steps = 0;
+var xAxis,bars,labels,numLabels,steps = 0;
+var format = d3.format(",d");
 var duration=2000;
 // var yAxis;
 var globalData;
@@ -73,6 +61,7 @@ d3.json("data.json", function(error, data) {
   	
     bars = g.append("g").attr("id","bars");
     labels = g.append("g").attr("id","labels");
+    numLabels = g.append("g").attr("id","numLabels");
     //绘制bar图
     // draw(data[0].data)
     globalData=data;
@@ -84,16 +73,18 @@ d3.json("data.json", function(error, data) {
 
 
 var draw=function(data){
-    data = data.sort(function(a, b) { return a.value - b.value; }).slice(0,10);
+    data = data.map(d=>{return {name:d.name,value:Number(d.value)}}).sort(function(a, b) { return b.value - a.value; })
+      .slice(0,10).reverse();
   
     x.domain([0, d3.max(data, function(d) { return d.value; })]);
     y.domain(data.map(function(d) { return d.name; })).padding(0.3);
-
+    console.log(data);
     xAxis
         .transition()
+        .ease(d3.easeLinear)
         .duration(duration)
         .call(d3.axisBottom(x).ticks(5).tickFormat(function(d) { return parseInt(d / 1000); }).tickSizeInner([-height]));
-    
+    console.log(data);
     //坐标轴上绘制名称虽然方便但是却不利于进行动画绘制
 
     // yAxis
@@ -103,12 +94,15 @@ var draw=function(data){
         .data(data, function(d) { return d ? d.name : this.id; });
     var barData = bars.selectAll(".bar")
         .data(data, function(d) { return d ? d.name : this.id; });
+    var numLabelsData = numLabels.selectAll(".numLabel")
+        .data(data, function(d) { return d ? d.name : this.id; });
     //enter
     barData.enter().append("rect")
         .attr("class", "bar")
         .attr('y',height)
         .attr("width", 0)
         .transition()
+        .ease(d3.easeLinear)
         .duration(duration)
         .attr("x", 0)
         .attr("height", y.bandwidth())
@@ -116,6 +110,7 @@ var draw=function(data){
         .attr("width", function(d) { return x(d.value); });
     //update
     barData.transition()
+        .ease(d3.easeLinear)
         .duration(duration)
         .attr("x", 0)
         .attr("height", y.bandwidth())
@@ -124,11 +119,12 @@ var draw=function(data){
     //exit
     barData.exit()
         .transition()
+        .ease(d3.easeLinear)
         .duration(duration)
         .attr('y',height+20)
         .attr("width", function(d) { return x(d.value); })
         .remove();
-          
+    //--------------- 类别标签      
     labelsData.enter().append("text")
         .attr("class","label")
         .attr("y",height)
@@ -137,9 +133,8 @@ var draw=function(data){
         .attr("text-anchor",'end')
         .style("alignment-baseline",'central')
         .text(d=>d.name)
-
-
       .transition()
+      .ease(d3.easeLinear)
         .duration(duration)
         .attr("y", function(d) { return y(d.name); })
         .on("end", function(){
@@ -150,14 +145,72 @@ var draw=function(data){
         });
 
     labelsData.transition()
+    .ease(d3.easeLinear)
         .duration(duration)
-        .attr("y", function(d) { return y(d.name); })
+        .attr("y", function(d) { return y(d.name); });
     
     labelsData.exit()
         .transition()
+        .ease(d3.easeLinear)
         .duration(duration)
         .attr('y',height+20)
         .remove();
+    //--------------- 数字标签      
+    numLabelsData.enter().append("text")
+        .attr("class","numLabel")
+        .attr("y",height)
+        .attr("x",0)
+        .attr('dx',0)
+        .attr("dy", y.bandwidth()/2)
+        .attr("text-anchor",'start')
+        .style("alignment-baseline",'central')
+        // .text(d=>d.value)
+        .text(0)
+
+
+      .transition()
+      .ease(d3.easeLinear)
+        .duration(duration)
+        .attr("x", function(d) { return x(d.value); })
+        .attr("y", function(d) { return y(d.name); })
+        .on("start", function (d) {
+          d3.active(this)
+              .tween("text", function() {
+                var that = d3.select(this),
+                    i = d3.interpolateNumber(that.text().replace(/,/g, ""), d.value);
+                return function(t) { that.text(format(i(t))); };
+              });
+        });
+
+    numLabelsData.transition()
+        .ease(d3.easeLinear)
+        .duration(duration)
+        .attr("x", function(d) { return x(d.value); })
+        .attr("y", function(d) { return y(d.name); })
+        .on("start", function (d) {
+          d3.active(this)
+              .tween("text", function() {
+                var that = d3.select(this),
+                    i = d3.interpolateNumber(that.text().replace(/,/g, ""), d.value);
+                return function(t) { that.text(format(i(t))); };
+              });
+        });
+    
+    numLabelsData.exit()
+        .transition()
+        .ease(d3.easeLinear)
+        .duration(duration)
+        .attr('y',height+20)
+        .attr("x", function(d) { return x(d.value); })
+        .on("start", function (d) {
+          d3.active(this)
+              .tween("text", function() {
+                var that = d3.select(this),
+                    i = d3.interpolateNumber(that.text().replace(/,/g, ""), d.value);
+                return function(t) { that.text(format(i(t))); };
+              });
+        })
+        .remove();    
     // if(steps < globalData.length){
     //     requestAnimationFrame(function() {
     //         draw(globalData[steps].data);
